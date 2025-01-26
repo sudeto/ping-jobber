@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudeto Services System Status</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .service-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .service-status:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        .status-dot.green {
+            background-color: #2ecc71;
+        }
+        .status-dot.red {
+            background-color: #e74c3c;
+        }
+
+        @media screen and (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .service-status {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .status-dot {
+                margin-top: 10px;
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h5>SUDETO SERVICES</h5>
+    <h1>System Status</h1>
+</div>
+<div id="servicesContainer"></div>
+
+<script>
+    const services = [
+        { name: 'ReadTime Estimator', endpoint: 'https://sudeto-services.onrender.com/ping' }
+    ];
+
+    async function checkServiceStatus(service) {
+        try {
+            const response = await fetch(service.endpoint);
+            return response.status === 200 ? 'up' : 'down';
+        } catch {
+            return 'down';
+        }
+    }
+
+    function createServiceElement(service) {
+        const serviceElement = document.createElement('div');
+        serviceElement.id = `service-${service.name.replace(/\s+/g, '-')}`;
+        serviceElement.className = 'service-status';
+        serviceElement.innerHTML = `
+            <span>${service.name}</span>
+            <div class="status-dot red"></div>
+        `;
+        return serviceElement;
+    }
+
+    async function updateServiceStatus(service) {
+        const serviceElement = document.getElementById(`service-${service.name.replace(/\s+/g, '-')}`);
+        const statusDot = serviceElement.querySelector('.status-dot');
+        const status = await checkServiceStatus(service);
+
+        statusDot.classList.remove('green', 'red');
+        statusDot.classList.add(status === 'up' ? 'green' : 'red');
+    }
+
+    async function initializeServiceStatuses() {
+        const container = document.getElementById('servicesContainer');
+
+        // Initial render with default red status
+        services.forEach(service => {
+            const serviceElement = createServiceElement(service);
+            container.appendChild(serviceElement);
+        });
+
+        // Initial status check
+        services.forEach(updateServiceStatus);
+
+        // Periodic status check every 30 seconds
+        setInterval(() => {
+            services.forEach(updateServiceStatus);
+        }, 30000);
+    }
+
+    // Initialize on page load
+    initializeServiceStatuses();
+</script>
+</body>
+</html>
